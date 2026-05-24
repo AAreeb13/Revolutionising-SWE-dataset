@@ -1,0 +1,12 @@
+Project:
+  project_id: str
+  project_prompt: str
+  project_type: str
+  difficulty: str
+  requirements: RequirementsSpec
+  high_level_design: ArchitectureSpec
+  components: list[ComponentSpec]
+  modules: list[ModuleSpec]
+  module_dependency_graph: DependencyGraph
+  repository_structure: RepositoryStructure
+  implementation_plan: list[ImplementationStep] # think of this as the phases of the project

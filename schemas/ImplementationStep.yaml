@@ -1,0 +1,7 @@
+ImplementationStep
+  step_id: str
+  module_target: str
+  action: str
+  result: str
+  command?: str
+  result_summary?: str

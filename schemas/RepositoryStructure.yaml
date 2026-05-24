@@ -1,0 +1,13 @@
+RepositoryStructure:
+  directories: List[DirectorySpec]
+
+
+DirectorySpec:
+  name: str
+  parent?: str
+  children: List[str]
+  files: List[FileSpec]
+
+FileSpec:
+  name: str
+  modules: List[str]

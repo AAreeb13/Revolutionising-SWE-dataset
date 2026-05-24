@@ -1,0 +1,7 @@
+RequirementsSpec
+  functional: list[str]
+  non_functional: list[str]
+  constraints: list[str]
+  assumptions: list[str]
+  out_of_scope: list[str]
+  

@@ -1,0 +1,8 @@
+ComponentSpec
+  name: str
+  description: str
+  inputs: list[str]
+  outputs: list[str]
+  dependencies: list[str]
+  Technologies: list[str]
+  

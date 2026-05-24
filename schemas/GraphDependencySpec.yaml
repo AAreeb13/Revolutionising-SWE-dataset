@@ -1,0 +1,7 @@
+GraphDependencySpec:
+  nodes: List[str]
+  edges: List[GraphDependencyEdgeSpec]
+
+GraphDependencyEdgeSpec:
+  source: str
+  target: str
