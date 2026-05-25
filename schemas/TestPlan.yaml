@@ -1,0 +1,5 @@
+TestPlan:
+  unit_tests: list[str]
+  integration_tests: list[str]
+  commands: list[str] 
+  testing_framework: str

@@ -1,4 +1,4 @@
-RequirementsSpec
+RequirementsSpec:
   functional: list[str]
   non_functional: list[str]
   constraints: list[str]

@@ -10,3 +10,4 @@ Project:
   module_dependency_graph: DependencyGraph
   repository_structure: RepositoryStructure
   implementation_plan: list[ImplementationStep] # think of this as the phases of the project
+  test_plan: TestPlan

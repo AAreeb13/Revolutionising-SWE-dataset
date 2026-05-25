@@ -1,0 +1,37 @@
+EvaluationRunSpec:
+  project_id: str
+  evaluation_id: str
+  agent_id: str
+
+  agents: list[str]
+
+  evaluator:
+    - type: Human | Automated | LLM
+  
+  evaluated_artifacts: list[str]
+  #  - "requirements"
+  #  - "architecture"
+  #  - "components"
+  #  - "modules" 
+  #  - "dependency_graph"
+  #  - "repository_structure"
+  #  - "code"
+  #  - "tests"
+  scores: list[int] # 1-5
+
+  
+  
+  PrincipleAssessmentSpec:
+    principle: str
+    category: str
+    status: success | partial | violation | not_applicable
+    severity: none | low | medium | high | critical
+    score: int
+    scope: EvaluationScopeSpec
+    evidence: list[str]
+    recommendation: str | null
+    confidence: float
+
+EvaluationScopeSpec:
+  artifact_type: project | component | module | signature | file | test
+  artifact_name: str

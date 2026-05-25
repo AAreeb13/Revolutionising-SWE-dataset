@@ -1,6 +1,6 @@
 GraphDependencySpec:
-  nodes: List[str]
-  edges: List[GraphDependencyEdgeSpec]
+  nodes: list[str]
+  edges: list[GraphDependencyEdgeSpec]
 
 GraphDependencyEdgeSpec:
   source: str

@@ -1,4 +1,4 @@
-ComponentSpec
+ComponentSpec:
   name: str
   description: str
   inputs: list[str]

@@ -1,15 +1,15 @@
-HLArchitectureSpec
+HLArchitectureSpec:
   style: Optional[str]
-  components: List[HLComponentSpec]
-  Relationships: List[RelationshipSpec]
-  Technologies: List[str]
+  components: list[HLComponentSpec]
+  Relationships: list[RelationshipSpec]
+  Technologies: list[str]
 
-HLComponentSpec
+HLComponentSpec:
   name: str
   type: str
   responsibilities: list[str]
 
-RelationshipSpec
+RelationshipSpec:
   source: str
   target: str
   relationship_type: str

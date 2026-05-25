@@ -1,20 +1,20 @@
-ModuleSpec
+ModuleSpec:
   name: str
   component: str
   type?: str
   responsibilities: list[str]
   dependencies: list[str]
-  signatures: List[SignatureSpec]
+  signatures: list[SignatureSpec]
 
-SignatureSpec
-  type: "function" | "class" | "method" | "schema" | "interface" | "api_endpoint"
+SignatureSpec:
+  type: function | class | method | schema | interface | api_endpoint
   name: str
   inputs: list[ParamSpec]
   output: str
   description: str
   belongs_to?: str
 
-ParamSpec
+ParamSpec:
   name: str
   type: str
   required: bool
