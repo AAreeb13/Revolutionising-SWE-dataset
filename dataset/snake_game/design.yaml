@@ -1,0 +1,7 @@
+high_level_design:
+  style: "Modular"
+  components:
+    - name: "The Snake Game"
+      responsibility: "Overall management of the game, including initializing components and managing the game loop"
+    - name: "Git Repository"
+      responsibility: "Version control and collaboration"

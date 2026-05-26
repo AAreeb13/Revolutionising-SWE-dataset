@@ -1,0 +1,28 @@
+requirements:
+  functional:
+    - The snake can be moved by the user
+    - The food appears at random locations
+    - The food disappears when eaten by the snake
+    - The snake grows in length when it eats food
+    - The game ends when the snake collides with itself or the walls
+    - The interface shows the game board, snake, food, score and score history
+    - The score is updated each time the snake eats food
+    - The score history should not clutter the interface and should be accessible to the player
+    - The game can be restarted after it ends
+  non_functional:
+    - The game is written in Python
+    - The game should have a simple and intuitive user interface
+    - The user inputs should be responsive and the game should run smoothly
+  assumptions:
+    - The game board size can be assumed to be fixed (any resonable size)
+    - initial length of the snake can be assumed to be 3 units
+    - Appropriate colours used for the snake, food, and game board to ensure good visibility
+    - The user inputs will be keyboard controls for moving the snake
+  constraints:
+    - The game should be implemented using Python
+    - The use of libraries such as Pygame is allowed for game development
+  out_of_scope:
+    - Advanced graphics or animations beyond the basic requirements
+    - Multiplayer functionality
+    - Saving and loading game states
+    - Implementing different levels or game modes

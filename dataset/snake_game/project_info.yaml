@@ -1,0 +1,13 @@
+project_id: "snake_game"
+project_prompt: |
+  Design and implement a simple snake game in Python. The game is expected to have the following features:
+    1. A snake that can move in four directions (up, down, left, right).
+    2. Food that appears at random locations on the game board.
+    3. The snake grows in length each time it eats food.
+    4. The game ends if the snake collides with itself or the walls of the game board. The player is allowed to restart if they would like to.
+    5. A simple user interface to display the game board, snake, and food.
+    6. A scoring system that keeps track of the player's score based on the number of food items.
+    7. The history of scores should be accessible to the player in a non-cluttered way.
+    The implementation should be done in Python and you are free to use any libraries such as Pygame for the game development.
+project_type: "game"
+difficulty: "low"

@@ -1,0 +1,134 @@
+modules:
+  - name: "Snake"
+    component: "Snake Game"
+    type: "class"
+    responsibilities:
+      - Represent the state of the snake
+    signatures:
+      type: "method"
+      name: "move"
+      inputs:
+        - name: direction
+          type: str
+          required: true
+      outputs:
+        new_positions: list[tuple[int, int]]
+    dependencies: []
+    technologies: ["Python"]
+  - name: "Food"
+    component: "Snake Game"
+    responsibilities:
+      - Represent the state of the food
+    signatures:
+      type: "method"
+      name: "generate_food"
+      inputs:
+        - name: game_board_size
+          type: tuple[int, int]
+          required: true
+      outputs:
+        new_position: tuple[int, int]
+    dependencies: []
+    technologies: ["Python"]
+  - name: "GameBoard"
+    component: "Snake Game"
+    responsibilities:
+      - Represent the game board and its boundaries
+      - Handle the game logic such as collision detection
+    signatures:
+      - type: "method"
+        name: "check_collisions"
+        inputs:
+          - snake_positions: list[tuple[int, int]]
+          - wall_boundaries: list[tuple[int, int]]
+        outputs:
+          collision: bool
+      - type: "method"
+        name: "check_food_collision"
+        inputs:
+          - snake_positions: list[tuple[int, int]]
+          - food_position: tuple[int, int]
+        outputs:
+          food_collision: bool
+      - type: "method"
+        name: "update_board"
+        inputs:
+          - snake_positions: list[tuple[int, int]]
+          - food_position: tuple[int, int]
+    outputs:
+      - collision: bool
+      - food_collision: bool
+    dependencies: ["Snake", "Food"]
+  - name: "GameState"
+    responsibilities:
+      - Store the current snake, food, score and game status (running or ended)
+    inputs:
+      - snake: Snake
+      - food: Food
+      - score: int
+      - game_status: str
+    outputs:
+      - current_state: dict
+    dependencies: ["Snake", "Food", "Score Manager"]
+  - name: "Game Engine"
+    type: "class"
+    responsibilities:
+      - Manage the game loop, update the game state based on user input and game logic, and determine when the game ends
+    dependencies: ["GameState", "GameBoard", "Food", "Score Manager"]
+    signatures:
+      type: "method"
+      name: "update_game_state"
+      inputs:
+        - user_input: str
+        - current_state: dict
+      outputs:
+        - updated_state: dict
+  - name: "Score Manager"
+    component: "Snake Game"
+    type: "class"
+    responsibilities:
+      - Manage the score and score history
+    dependencies: []
+    signatures:
+      type: "method"
+      name: "update_score"
+      inputs:
+        - current_score: int
+      outputs:
+        - new_score: int
+      type: "method"
+      name: "get_score_history"
+      inputs: []
+      outputs:
+        - score_history: list[int]
+  - name: "Input Handler"
+    component: "Snake Game"
+    type: "class"
+    responsibilities:
+      - Handle user input for controlling the snake
+    inputs: []
+    outputs:
+      - movement_command: str
+    dependencies: []
+    signatures:
+      type: "method"
+      name: "translate_input"
+      inputs:
+        - raw_input: str
+      outputs:
+        movement_command: str
+  - name: "Renderer"
+    component: "Snake Game"
+    type: "class"
+    responsibilities:
+      - Render the game board, snake, food, score and score history on the screen
+    dependencies: ["GameState", "Score Manager"]
+    signatures:
+      type: "method"
+      name: "render"
+      inputs:
+        - current_state: dict
+        - score_history: list[int]
+      outputs:
+        - None
+      description: "Renders the game state and score history on the screen using a library such as Pygame"
