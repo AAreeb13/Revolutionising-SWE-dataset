@@ -1,0 +1,26 @@
+SOLID:
+  single_responsibility
+  open_closed
+  liskov_substitution
+  interface_segregation
+  dependency_inversion
+
+Architecture:
+  separation_of_concerns
+  low_coupling
+  high_cohesion
+  correct_layering
+  dependency_direction
+
+Design:
+  appropriate_design_patterns
+  overengineering
+  abstraction_quality
+  interface_clarity
+
+Implementation:
+  error_handling
+  input_validation
+  type_safety
+  testability
+  maintainability

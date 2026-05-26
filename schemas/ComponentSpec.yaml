@@ -1,8 +1,8 @@
 ComponentSpec:
   name: str
-  description: str
+  responsibilities: list[str]
   inputs: list[str]
   outputs: list[str]
   dependencies: list[str]
-  Technologies: list[str]
+  technologies: list[str]
   
