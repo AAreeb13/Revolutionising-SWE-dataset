@@ -1,0 +1,17 @@
+test_plan:
+  unit_tests:
+    - "TodoItem initializes with id, description, completion status and optional due date"
+    - "TodoItem can be marked as completed"
+    - "TodoItem serializes to and from dictionary data"
+    - "TodoStorage returns an empty list when the storage file does not exist"
+    - "TodoStorage saves and loads todo items from local JSON storage"
+    - "TodoManager adds, lists, completes, deletes and edits todo items"
+    - "CLIInterface builds parsers for add, list, complete, delete and edit commands"
+    - "CLIInterface formats todo items with status and due date"
+  integration_tests:
+    - "A todo item added through the manager is saved and loaded in a later manager instance"
+    - "A user can add, list, edit, complete and delete a todo item through the CLI workflow"
+    - "Invalid task identifiers produce user-facing feedback without corrupting storage"
+  commands:
+    - "pytest"
+  testing_framework: "pytest"

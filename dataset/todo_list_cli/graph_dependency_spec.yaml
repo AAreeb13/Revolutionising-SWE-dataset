@@ -1,0 +1,17 @@
+graph_dependencies:
+  nodes:
+    - "TodoItem"
+    - "TodoManager"
+    - "TodoStorage"
+    - "CLIInterface"
+  edges:
+    - source: "TodoManager"
+      target: "TodoItem"
+    - source: "TodoManager"
+      target: "TodoStorage"
+    - source: "TodoStorage"
+      target: "TodoItem"
+    - source: "CLIInterface"
+      target: "TodoManager"
+    - source: "CLIInterface"
+      target: "TodoItem"

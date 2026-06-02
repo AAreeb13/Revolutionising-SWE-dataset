@@ -1,0 +1,28 @@
+requirements:
+  functional:
+    - The user can add a new task to the todo list
+    - The user can optionally assign a due date when adding a task
+    - The user can view all tasks in the todo list
+    - The task list shows each task's status and due date when available
+    - The user can mark a task as completed
+    - The user can delete a task from the todo list
+    - The user can edit the description of a task
+    - The user can edit the due date of a task
+    - The application saves the todo list to a local file
+    - The application loads the todo list from a local file when it starts
+  non_functional:
+    - The application should make it easy for users to know its commands and how to use them
+    - The application should be responsive and provide feedback to the user for their actions
+    - The application should be implemented in Python and use local storage for saving the todo list
+  assumptions:
+    - Task identifiers can be generated as sequential integers
+    - Due dates can be stored as strings in a simple date format
+    - The todo list file can be stored in the project directory by default
+  constraints:
+    - The application should be implemented in Python
+    - The application should use local storage (e.g., a file) to save the todo list
+    - The application should run from the command line without a graphical interface
+  out_of_scope:
+    - Advanced features such as task prioritization, categorization, or reminders
+    - A graphical user interface (GUI) for the application
+    - Integration with external services (e.g., calendar apps, cloud storage)

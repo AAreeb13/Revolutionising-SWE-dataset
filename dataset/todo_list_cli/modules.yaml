@@ -1,0 +1,170 @@
+modules:
+  - name: "TodoItem"
+    component: "Todo Item"
+    type: "class"
+    responsibilities:
+      - Represent a single todo item, including its id, description, status and due date
+      - Convert todo item data to and from dictionaries for storage
+    dependencies: []
+    signatures:
+      - type: "class"
+        name: "TodoItem"
+        inputs:
+          - name: id
+            type: int
+            required: true
+          - name: description
+            type: str
+            required: true
+          - name: completed
+            type: bool
+            required: false
+            default: "False"
+          - name: due_date
+            type: str
+            required: false
+            default: "None"
+        output: "TodoItem"
+        description: "Creates a todo item model"
+      - type: "method"
+        name: "mark_completed"
+        inputs: []
+        output: "None"
+        description: "Marks the todo item as completed"
+        belongs_to: "TodoItem"
+      - type: "method"
+        name: "to_dict"
+        inputs: []
+        output: "dict"
+        description: "Serializes the todo item into a dictionary"
+        belongs_to: "TodoItem"
+      - type: "method"
+        name: "from_dict"
+        inputs:
+          - name: data
+            type: dict
+            required: true
+        output: "TodoItem"
+        description: "Creates a todo item from stored dictionary data"
+        belongs_to: "TodoItem"
+    technologies: ["Python"]
+  - name: "TodoManager"
+    component: "To-Do Manager"
+    type: "class"
+    responsibilities:
+      - Manage the list of todo items, including adding, listing, updating, completing and deleting items
+      - Coordinate persistence after changes
+    dependencies: ["TodoItem", "TodoStorage"]
+    signatures:
+      - type: "method"
+        name: "add_item"
+        inputs:
+          - name: description
+            type: str
+            required: true
+          - name: due_date
+            type: str
+            required: false
+            default: "None"
+        output: "int"
+        description: "Adds a new todo item and returns its generated id"
+        belongs_to: "TodoManager"
+      - type: "method"
+        name: "list_items"
+        inputs: []
+        output: "list[TodoItem]"
+        description: "Returns all todo items"
+        belongs_to: "TodoManager"
+      - type: "method"
+        name: "complete_item"
+        inputs:
+          - name: item_id
+            type: int
+            required: true
+        output: "bool"
+        description: "Marks a todo item as completed when it exists"
+        belongs_to: "TodoManager"
+      - type: "method"
+        name: "delete_item"
+        inputs:
+          - name: item_id
+            type: int
+            required: true
+        output: "bool"
+        description: "Deletes a todo item when it exists"
+        belongs_to: "TodoManager"
+      - type: "method"
+        name: "edit_item"
+        inputs:
+          - name: item_id
+            type: int
+            required: true
+          - name: description
+            type: str
+            required: false
+            default: "None"
+          - name: due_date
+            type: str
+            required: false
+            default: "None"
+        output: "bool"
+        description: "Updates the description and/or due date of an existing todo item"
+        belongs_to: "TodoManager"
+    technologies: ["Python"]
+  - name: "TodoStorage"
+    component: "Storage"
+    type: "class"
+    responsibilities:
+      - Load todo items from a local storage file
+      - Save todo items to a local storage file
+      - Handle missing storage files by returning an empty todo list
+    dependencies: ["TodoItem"]
+    signatures:
+      - type: "method"
+        name: "load_items"
+        inputs: []
+        output: "list[TodoItem]"
+        description: "Loads todo items from the configured local file"
+        belongs_to: "TodoStorage"
+      - type: "method"
+        name: "save_items"
+        inputs:
+          - name: items
+            type: "list[TodoItem]"
+            required: true
+        output: "None"
+        description: "Saves todo items to the configured local file"
+        belongs_to: "TodoStorage"
+    technologies: ["Python", "JSON"]
+  - name: "CLIInterface"
+    component: "CLI Interface"
+    type: "function"
+    responsibilities:
+      - Parse command-line input for add, list, complete, delete and edit commands
+      - Display todo items and feedback messages in the terminal
+      - Connect user commands to the todo manager
+    dependencies: ["TodoManager", "TodoItem"]
+    signatures:
+      - type: "function"
+        name: "build_parser"
+        inputs: []
+        output: "ArgumentParser"
+        description: "Builds the command-line parser and supported subcommands"
+      - type: "function"
+        name: "render_items"
+        inputs:
+          - name: items
+            type: "list[TodoItem]"
+            required: true
+        output: "str"
+        description: "Formats todo items for terminal display"
+      - type: "function"
+        name: "main"
+        inputs:
+          - name: argv
+            type: "list[str]"
+            required: false
+            default: "None"
+        output: "int"
+        description: "Application entry point for command-line execution"
+    technologies: ["Python", "argparse"]

@@ -1,0 +1,34 @@
+repository_structure:
+  directories:
+    - name: "src"
+      children: []
+      files:
+        - name: "todo_item.py"
+          modules: ["TodoItem"]
+        - name: "todo_manager.py"
+          modules: ["TodoManager"]
+        - name: "todo_storage.py"
+          modules: ["TodoStorage"]
+        - name: "cli.py"
+          modules: ["CLIInterface"]
+    - name: "tests"
+      children: ["unit", "integration"]
+      files: []
+    - name: "unit"
+      parent: "tests"
+      children: []
+      files:
+        - name: "test_todo_item.py"
+          modules: ["TodoItem"]
+        - name: "test_todo_manager.py"
+          modules: ["TodoManager"]
+        - name: "test_todo_storage.py"
+          modules: ["TodoStorage"]
+        - name: "test_cli.py"
+          modules: ["CLIInterface"]
+    - name: "integration"
+      parent: "tests"
+      children: []
+      files:
+        - name: "test_todo_workflow.py"
+          modules: ["TodoManager", "TodoStorage", "CLIInterface"]

@@ -1,0 +1,37 @@
+high_level_design:
+  style: "Modular"
+  components:
+    - name: "To-Do Manager"
+      type: "service"
+      responsibilities:
+        - "Manage the list of todo items, including adding, updating, completing, deleting and listing tasks"
+    - name: "CLI Interface"
+      type: "interface"
+      responsibilities:
+        - "Parse command-line commands and display todo list output and action feedback"
+    - name: "Storage"
+      type: "persistence"
+      responsibilities:
+        - "Save todo items to a local file and load them when the application starts"
+    - name: "Todo Item"
+      type: "model"
+      responsibilities:
+        - "Represent a single todo item with its id, description, completion status and optional due date"
+    - name: "Git Repository"
+      type: "tooling"
+      responsibilities:
+        - "Version control and collaboration"
+  Relationships:
+    - source: "CLI Interface"
+      target: "To-Do Manager"
+      relationship_type: "sends user commands to"
+    - source: "To-Do Manager"
+      target: "Todo Item"
+      relationship_type: "creates and updates"
+    - source: "To-Do Manager"
+      target: "Storage"
+      relationship_type: "persists and retrieves todos through"
+  Technologies:
+    - "Python"
+    - "argparse"
+    - "JSON file storage"

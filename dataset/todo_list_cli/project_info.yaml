@@ -1,0 +1,13 @@
+project_id: "todo_list_cli"
+project_prompt: |
+  Design and implement a command-line interface (CLI) application for managing a to-do list.
+  The application must have the following capabilities:
+    1. Add a new to-do item and an optional due date.
+    2. List all to-do items, showing their status (pending or completed) and due dates if available.
+    3. Mark a to-do item as completed.
+    4. Delete a to-do item.
+    5. Edit the description or due date of an existing to-do item.
+    6. Save the to-do list to a file and load it from a file when the application starts.
+    The implementation should be done in Python and use local storage, and you may use any libraries that you find helpful for building the CLI application.
+project_type: "CLI tool"
+difficulty: "low"
