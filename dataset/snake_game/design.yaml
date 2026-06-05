@@ -1,7 +1,15 @@
 high_level_design:
   style: "Modular"
   components:
-    - name: "The Snake Game"
+    - name: "Snake Game"
       responsibility: "Overall management of the game, including initializing components and managing the game loop"
     - name: "Git Repository"
       responsibility: "Version control and collaboration"
+  relationships:
+    - source: "Snake Game"
+      target: "Git Repository"
+      relationship_type: "is version controlled by"
+  technologies:
+    - "Python"
+    - "Git"
+    - "Pygame"
