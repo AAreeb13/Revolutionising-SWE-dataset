@@ -1,0 +1,90 @@
+requirements:
+  functional:
+    - "Capture or accept monochrome eye images suitable for iris recognition."
+    - "Assess image focus before segmentation and reject or skip images that do not meet a minimum focus-quality criterion."
+    - "Support focus assessment using high-frequency image content, such as total high-frequency power in the 2D Fourier spectrum, or an equivalent sharpness measure."
+    - "Localize the iris outer boundary and pupil boundary in the image."
+    - "Estimate iris and pupil center coordinates and radii independently; do not assume they are concentric."
+    - |
+      Iris and pupil boundary localization must use Daugman's integro-differential circular edge detector or an equivalent boundary detector:
+      max over (r, x0, y0) of G_sigma(r) * d/dr contour_integral(I(x, y), r, x0, y0) / (2*pi*r)
+      where the search estimates center coordinates and radius for circular pupil and limbus boundaries.
+    - "Detect and mask upper eyelid, lower eyelid, eyelashes, specular reflections, contact-lens boundary artifacts, and low-quality iris regions."
+    - "Normalize the iris into a dimensionless polar/rubber-sheet representation to handle iris size, position, and pupil dilation."
+    - |
+      Rubber-sheet normalization must map raw iris image coordinates to normalized iris coordinates:
+      I(x(r, theta), y(r, theta)) -> I(r, theta)
+      x(r, theta) = (1 - r) * xp(theta) + r * xs(theta)
+      y(r, theta) = (1 - r) * yp(theta) + r * ys(theta)
+      where (xp, yp) are pupil-boundary points, (xs, ys) are outer iris-boundary points, r is in [0, 1], and theta is in [0, 2*pi].
+    - "Encode iris texture using multi-scale quadrature 2D Gabor wavelet phase information."
+    - "Use multi-scale Gabor wavelet parameters spanning roughly 0.15mm to 1.2mm on the iris, with frequencies spanning approximately 3 octaves in inverse proportion to angular scale."
+    - |
+      Gabor phase encoding must project normalized iris texture onto complex-valued 2D Gabor wavelets and quantize the signs of the real and imaginary responses:
+      h{Re,Im} = sgn{Re,Im} integral_rho integral_phi I(rho, phi)
+                 * exp(-i * omega * (theta0 - phi))
+                 * exp(-((r0 - rho)^2) / alpha^2)
+                 * exp(-((theta0 - phi)^2) / beta^2)
+                 * rho d_rho d_phi
+      where the signs of the real and imaginary components provide two phase bits for each local response.
+    - "Quantize phase responses into quadrant codes using cyclic gray-code-style encoding so adjacent phase quadrants differ by one bit."
+    - "Produce a compact IrisCode-style binary template, approximately 2,048 phase bits."
+    - "Produce a corresponding mask bit vector indicating which template regions should be ignored."
+    - "Ensure the mask bit vector has the same length and alignment as the IrisCode phase-bit vector."
+    - "Compare two iris templates using XOR over phase bits and AND over masks."
+    - |
+      Template matching must compute masked fractional Hamming Distance:
+      HD = norm((code_a XOR code_b) AND mask_a AND mask_b) / norm(mask_a AND mask_b)
+      where only valid unmasked bits contribute to the score.
+    - "Reject a comparison or mark it low-confidence when the number of mutually unmasked bits is below a configurable minimum."
+    - "Support orientation compensation by comparing cyclic angular shifts of the IrisCode and selecting the smallest Hamming Distance."
+    - "Treat orientation compensation as a best-of-n comparison; the retained match score must be the minimum Hamming Distance across tested shifts."
+    - "Decide match or non-match using a configurable Hamming Distance threshold."
+    - "Provide threshold guidance based on the paper's decision region, including HD <= 0.32 as a strong-match reference point under comparable conditions."
+    - "Support one-to-one verification."
+    - "Support one-to-many identification against a database of enrolled templates."
+    - |
+      One-to-many identification must account for database-size false-match scaling:
+      P_N = 1 - (1 - P_1)^N
+      where P_1 is the single-comparison false-match probability and P_N is the probability of at least one false match when searching N unrelated templates.
+    - "Report match score, decision, and quality or mask information."
+  non_functional:
+    - "Use phase information rather than amplitude as the primary recognition feature."
+    - "Be robust to illumination, camera gain, contrast variation, pupil dilation, eye position, and moderate rotation."
+    - "Preserve very low false-match probability for large database search."
+    - "Reject or mask poor-quality image regions rather than allowing artifacts to influence matching."
+    - "Perform matching efficiently using bitwise operations."
+    - "Keep template comparison fast enough for exhaustive database search."
+    - "Maintain stable identity matching across different images of the same iris, subject to image quality."
+    - "Require enough image resolution to capture iris texture; at least 70 pixels in iris radius, with 100 to 140 pixels preferred."
+    - "Prefer near-infrared imaging in the 700nm to 900nm range for unobtrusive capture and better detail in dark irises."
+  constraints:
+    - "Do not assume pupil and iris boundaries are concentric."
+    - "Do not compare raw iris images directly; compare normalized encoded templates."
+    - "Do not use corrupted, occluded, or masked regions during matching."
+    - "Do not rely on iris colour as the main recognition signal."
+    - "Do not treat amplitude features as stable enough for primary matching."
+    - "Hamming Distance must be computed fractionally over valid unmasked bits."
+    - "Orientation compensation must account for head tilt, eye rotation, and camera or mirror rotation."
+    - "The selected Hamming Distance after rotation compensation must be interpreted with awareness that best-of-n matching shifts the unrelated-iris score distribution downward."
+    - "One-to-many search requires stricter false-match reasoning than one-to-one verification."
+  assumptions:
+    - "The input image contains a visible human eye with enough iris area exposed."
+    - "The subject is reasonably cooperative, especially for focus and positioning."
+    - "Iris images are captured at short range, roughly under one meter in the paper's setting."
+    - "The iris pattern is stable enough over time for biometric recognition."
+    - "Left and right irises are treated as distinct biometric patterns."
+    - "Different people's iris phase codes behave approximately like statistically independent binary patterns."
+    - "Some iris regions may be unusable, so masks are part of the template."
+    - "Matching thresholds can be tuned depending on whether the use case is verification or large-scale identification."
+    - "Poor focus, reflections, eyelids, lashes, and contact lens artifacts are expected real-world issues."
+  out_of_scope:
+    - "Face recognition as the main biometric."
+    - "Retinal scanning."
+    - "Medical diagnosis or iridology."
+    - "General eye tracking beyond what is needed to locate the iris."
+    - "Building camera hardware, pan/tilt optics, or illumination hardware unless explicitly required."
+    - "Spoof or liveness detection unless explicitly required."
+    - "Encryption, access control, identity governance, consent workflows, or privacy policy design."
+    - "National-scale deployment infrastructure."
+    - "Alternative iris-recognition algorithms not based on the paper's Gabor/IrisCode approach."

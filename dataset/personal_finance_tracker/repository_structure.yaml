@@ -1,0 +1,100 @@
+repository_structure:
+  directories:
+    - name: "src"
+      children: ["personal_finance_cli"]
+      files: []
+    - name: "personal_finance_cli"
+      parent: "src"
+      children: ["repositories", "services"]
+      files:
+        - name: "__init__.py"
+          modules: []
+        - name: "__main__.py"
+          modules: ["CLI"]
+        - name: "cli.py"
+          modules: ["CLI"]
+        - name: "db.py"
+          modules: ["Database"]
+        - name: "errors.py"
+          modules: []
+        - name: "formatting.py"
+          modules: ["Formatter"]
+        - name: "validation.py"
+          modules: ["InputValidation"]
+    - name: "repositories"
+      parent: "personal_finance_cli"
+      children: []
+      files:
+        - name: "__init__.py"
+          modules: []
+        - name: "accounts.py"
+          modules: ["AccountRepository"]
+        - name: "categories.py"
+          modules: ["CategoryRepository"]
+        - name: "transactions.py"
+          modules: ["TransactionRepository"]
+        - name: "recurring.py"
+          modules: ["RecurringRepository"]
+        - name: "reports.py"
+          modules: ["ReportRepository"]
+    - name: "services"
+      parent: "personal_finance_cli"
+      children: []
+      files:
+        - name: "__init__.py"
+          modules: []
+        - name: "accounts.py"
+          modules: ["AccountService"]
+        - name: "categories.py"
+          modules: ["CategoryService"]
+        - name: "transactions.py"
+          modules: ["TransactionService"]
+        - name: "recurring.py"
+          modules: ["RecurringService"]
+        - name: "reports.py"
+          modules: ["ReportService"]
+    - name: "tests"
+      children: ["unit", "integration"]
+      files: []
+    - name: "unit"
+      parent: "tests"
+      children: []
+      files:
+        - name: "test_validation.py"
+          modules: ["InputValidation"]
+        - name: "test_formatting.py"
+          modules: ["Formatter"]
+        - name: "test_account_repository.py"
+          modules: ["AccountRepository", "Database"]
+        - name: "test_category_repository.py"
+          modules: ["CategoryRepository", "Database"]
+        - name: "test_transaction_repository.py"
+          modules: ["TransactionRepository", "Database"]
+        - name: "test_recurring_repository.py"
+          modules: ["RecurringRepository", "Database"]
+        - name: "test_report_repository.py"
+          modules: ["ReportRepository", "Database"]
+        - name: "test_account_service.py"
+          modules: ["AccountService", "AccountRepository", "TransactionRepository"]
+        - name: "test_category_service.py"
+          modules: ["CategoryService", "CategoryRepository"]
+        - name: "test_transaction_service.py"
+          modules: ["TransactionService", "AccountRepository", "CategoryRepository", "TransactionRepository"]
+        - name: "test_recurring_service.py"
+          modules: ["RecurringService", "RecurringRepository", "TransactionService"]
+        - name: "test_report_service.py"
+          modules: ["ReportService", "ReportRepository"]
+        - name: "test_cli.py"
+          modules: ["CLI"]
+    - name: "integration"
+      parent: "tests"
+      children: []
+      files:
+        - name: "test_cli_workflows.py"
+          modules: ["CLI", "Database", "AccountService", "CategoryService", "TransactionService"]
+        - name: "test_transaction_balances.py"
+          modules: ["Database", "AccountRepository", "CategoryRepository", "TransactionRepository", "TransactionService"]
+        - name: "test_recurring_generation.py"
+          modules: ["Database", "RecurringRepository", "RecurringService", "TransactionService"]
+        - name: "test_monthly_summary.py"
+          modules: ["Database", "ReportRepository", "ReportService"]

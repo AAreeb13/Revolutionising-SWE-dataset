@@ -1,0 +1,23 @@
+project_id: "personal_finance_tracker"
+project_prompt: |
+ "Build a command-line personal finance tracker in Python 3.13.The application is a local single-user CLI tool. 
+ It must use SQLite for persistence through Python's standard sqlite3 library. 
+ Do not build a web UI, authentication, encryption, cloud sync, bank integrations, or payment processing. 
+ The CLI must support these commands:
+  1. account add --name NAME --type TYPE   - TYPE must be one of: checking, savings, credit, cash.   - Account names must be unique.   - New accounts start with balance 0.
+  2. account list   - Shows account id, name, type, and current balance. 
+  3. account rename --id ACCOUNT_ID --name NEW_NAME   - Fails if ACCOUNT_ID does not exist.   - Fails if NEW_NAME is already used by another account.
+  4. account delete --id ACCOUNT_ID   - Fails if the account has any transactions.   - Otherwise deletes the account.
+  5. category add --name NAME --kind KIND   - KIND must be one of: income, expense.   - Category names must be unique.
+  6. category list   - Shows category id, name, and kind.
+  7. transaction add --account ACCOUNT_ID --category CATEGORY_ID --type TYPE --amount AMOUNT --date YYYY-MM-DD --description TEXT   - TYPE must be one of: income, expense.   - AMOUNT must be greater than 0.   - DATE must be a valid ISO date.   - The account and category must exist.   - TYPE must match the category kind.   - Income increases the account balance.   - Expense decreases the account balance.
+  8. transaction list   - Shows transaction id, date, account name, category name, type, amount, and description.   - Results are sorted by date ascending, then id ascending.   - Optional filters:     --account ACCOUNT_ID     --category CATEGORY_ID     --type income|expense     --from YYYY-MM-DD     --to YYYY-MM-DD
+  9. transaction edit --id TRANSACTION_ID [--account ACCOUNT_ID] [--category CATEGORY_ID] [--type TYPE] [--amount AMOUNT] [--date YYYY-MM-DD] [--description TEXT]   - Fails if TRANSACTION_ID does not exist.   - Recomputes balances correctly if account, type, or amount changes.   - Applies the same validation rules as transaction add.
+  10. transaction delete --id TRANSACTION_ID   - Fails if TRANSACTION_ID does not exist.   - Reverses the transaction's balance effect.
+  11. summary monthly --month YYYY-MM   - Shows total income, total expenses, net amount, and ending balance across all accounts for that month.   - Also shows totals grouped by category.   - If no transactions exist for the month, show zero totals.
+  12. recurring add --account ACCOUNT_ID --category CATEGORY_ID --type TYPE --amount AMOUNT --start YYYY-MM-DD --interval monthly --description TEXT   - Only monthly recurring transactions are required.   - Validates the same account/category/type/amount/date rules as transaction add.   - Stores the recurring rule but does not immediately create transactions.
+  13. recurring run --to YYYY-MM-DD   - Generates all due recurring transactions up to and including the given date.   - Must not generate duplicate transactions if run multiple times for the same date.   - Updates account balances for generated transactions.
+ General behavior:- All commands should print clear success or error messages.- Invalid input must not modify the database.- Database operations that change balances and transactions must be atomic.- Use argparse for CLI parsing.- Use sqlite3 for storage.- Use pytest for tests.
+
+project_type: "cli tool"
+difficulty: "medium"

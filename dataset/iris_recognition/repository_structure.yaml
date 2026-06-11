@@ -1,0 +1,156 @@
+repository_structure:
+  directories:
+    - name: "src"
+      children: ["iris_recognition"]
+      files: []
+    - name: "iris_recognition"
+      parent: "src"
+      children:
+        - "segmentation"
+        - "encoding"
+        - "templates"
+        - "matching"
+        - "decisions"
+      files:
+        - name: "__init__.py"
+          modules: []
+        - name: "image_io.py"
+          modules: ["ImageLoader", "ImageMetadata"]
+        - name: "quality.py"
+          modules: ["FocusQualityEvaluator", "ImageQualityReport"]
+        - name: "normalization.py"
+          modules: ["RubberSheetNormalizer", "NormalizedIris"]
+        - name: "reporting.py"
+          modules: ["RecognitionResult", "ResultFormatter"]
+    - name: "segmentation"
+      parent: "iris_recognition"
+      children: []
+      files:
+        - name: "__init__.py"
+          modules: []
+        - name: "boundaries.py"
+          modules: ["CircularBoundaryDetector", "BoundaryGeometry"]
+        - name: "occlusion.py"
+          modules:
+            - "EyelidDetector"
+            - "EyelashDetector"
+            - "ReflectionDetector"
+            - "ArtifactMaskCombiner"
+            - "SegmentationMask"
+    - name: "encoding"
+      parent: "iris_recognition"
+      children: []
+      files:
+        - name: "__init__.py"
+          modules: []
+        - name: "interfaces.py"
+          modules: ["GaborResponseProvider", "PhaseBitQuantizer"]
+        - name: "gabor.py"
+          modules: ["GaborFilterBank"]
+        - name: "phase.py"
+          modules: ["PhaseQuantizer"]
+        - name: "encoder.py"
+          modules: ["IrisCodeEncoder"]
+    - name: "templates"
+      parent: "iris_recognition"
+      children: []
+      files:
+        - name: "__init__.py"
+          modules: []
+        - name: "template.py"
+          modules: ["IrisCodeTemplate"]
+        - name: "serializer.py"
+          modules: ["TemplateSerializer"]
+        - name: "store.py"
+          modules: ["TemplateRepository", "TemplateStore"]
+        - name: "gallery.py"
+          modules: ["TemplateGallery"]
+    - name: "matching"
+      parent: "iris_recognition"
+      children: []
+      files:
+        - name: "__init__.py"
+          modules: []
+        - name: "hamming.py"
+          modules: ["MaskedHammingMatcher", "MatchScore"]
+        - name: "rotation.py"
+          modules: ["TemplateComparator", "RotationCompensator"]
+    - name: "decisions"
+      parent: "iris_recognition"
+      children: []
+      files:
+        - name: "__init__.py"
+          modules: []
+        - name: "decision.py"
+          modules: ["MatchDecisionEngine"]
+        - name: "risk.py"
+          modules: ["FalseMatchRiskEstimator", "FalseMatchRiskModel"]
+    - name: "tests"
+      children: ["unit", "integration"]
+      files: []
+    - name: "unit"
+      parent: "tests"
+      children: []
+      files:
+        - name: "test_image_io.py"
+          modules: ["ImageLoader", "ImageMetadata"]
+        - name: "test_quality.py"
+          modules: ["FocusQualityEvaluator", "ImageQualityReport"]
+        - name: "test_boundary_detection.py"
+          modules: ["CircularBoundaryDetector", "BoundaryGeometry"]
+        - name: "test_occlusion_masks.py"
+          modules:
+            - "EyelidDetector"
+            - "EyelashDetector"
+            - "ReflectionDetector"
+            - "ArtifactMaskCombiner"
+            - "SegmentationMask"
+        - name: "test_normalization.py"
+          modules: ["RubberSheetNormalizer", "NormalizedIris"]
+        - name: "test_gabor_filter_bank.py"
+          modules: ["GaborResponseProvider", "GaborFilterBank"]
+        - name: "test_phase_quantizer.py"
+          modules: ["PhaseBitQuantizer", "PhaseQuantizer"]
+        - name: "test_iriscode_encoder.py"
+          modules: ["IrisCodeEncoder", "GaborResponseProvider", "PhaseBitQuantizer", "IrisCodeTemplate"]
+        - name: "test_template_serialization.py"
+          modules: ["IrisCodeTemplate", "TemplateSerializer"]
+        - name: "test_template_gallery.py"
+          modules: ["TemplateRepository", "TemplateStore", "TemplateGallery", "IrisCodeTemplate"]
+        - name: "test_hamming_matcher.py"
+          modules: ["TemplateComparator", "MaskedHammingMatcher", "MatchScore", "IrisCodeTemplate"]
+        - name: "test_rotation_compensation.py"
+          modules: ["RotationCompensator", "TemplateComparator", "IrisCodeTemplate"]
+        - name: "test_decision_engine.py"
+          modules: ["MatchDecisionEngine", "FalseMatchRiskEstimator", "FalseMatchRiskModel", "MatchScore"]
+        - name: "test_reporting.py"
+          modules: ["RecognitionResult", "ResultFormatter"]
+    - name: "integration"
+      parent: "tests"
+      children: []
+      files:
+        - name: "test_template_creation_pipeline.py"
+          modules:
+            - "ImageLoader"
+            - "FocusQualityEvaluator"
+            - "CircularBoundaryDetector"
+            - "ArtifactMaskCombiner"
+            - "RubberSheetNormalizer"
+            - "GaborFilterBank"
+            - "PhaseQuantizer"
+            - "IrisCodeEncoder"
+        - name: "test_verification_workflow.py"
+          modules:
+            - "IrisCodeTemplate"
+            - "MaskedHammingMatcher"
+            - "RotationCompensator"
+            - "MatchDecisionEngine"
+            - "RecognitionResult"
+        - name: "test_identification_workflow.py"
+          modules:
+            - "TemplateStore"
+            - "TemplateGallery"
+            - "RotationCompensator"
+            - "MatchDecisionEngine"
+            - "FalseMatchRiskModel"
+            - "RecognitionResult"

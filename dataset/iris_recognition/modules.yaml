@@ -1,0 +1,916 @@
+modules:
+  - name: "ImageLoader"
+    component: "Eye Image Input"
+    type: "class"
+    responsibilities:
+      - "Load monochrome or near-infrared eye images from files or arrays"
+      - "Convert supported inputs into a consistent grayscale numeric image representation"
+      - "Return image data with basic metadata for downstream processing"
+    dependencies: []
+    signatures:
+      - type: "class"
+        name: "ImageLoader"
+        inputs: []
+        output: "ImageLoader"
+        description: "Creates an image loading utility"
+      - type: "method"
+        name: "load"
+        inputs:
+          - name: "path"
+            type: "str"
+            required: true
+        output: "ImageMetadata"
+        description: "Loads an image file and returns image pixels with metadata"
+        belongs_to: "ImageLoader"
+
+  - name: "ImageMetadata"
+    component: "Eye Image Input"
+    type: "schema"
+    responsibilities:
+      - "Represent the loaded eye image, dimensions, source path, and acquisition metadata"
+      - "Carry image data through the recognition pipeline without mixing in algorithm decisions"
+    dependencies: []
+    signatures:
+      - type: "schema"
+        name: "ImageMetadata"
+        inputs:
+          - name: "pixels"
+            type: "ndarray"
+            required: true
+          - name: "width"
+            type: "int"
+            required: true
+          - name: "height"
+            type: "int"
+            required: true
+          - name: "source"
+            type: "str"
+            required: false
+            default: "None"
+        output: "ImageMetadata"
+        description: "Stores normalized image pixels and basic image metadata"
+
+  - name: "FocusQualityEvaluator"
+    component: "Image Quality Assessment"
+    type: "class"
+    responsibilities:
+      - "Estimate image focus using high-frequency image content or an equivalent sharpness measure"
+      - "Reject or flag images that fail the configured quality threshold"
+      - "Produce quality metrics used by downstream reporting and confidence logic"
+    dependencies: ["ImageMetadata"]
+    signatures:
+      - type: "class"
+        name: "FocusQualityEvaluator"
+        inputs:
+          - name: "minimum_focus_score"
+            type: "float"
+            required: true
+        output: "FocusQualityEvaluator"
+        description: "Creates an evaluator for focus and image usability"
+      - type: "method"
+        name: "evaluate"
+        inputs:
+          - name: "image"
+            type: "ImageMetadata"
+            required: true
+        output: "ImageQualityReport"
+        description: "Returns focus score and pass/fail status for an eye image"
+        belongs_to: "FocusQualityEvaluator"
+
+  - name: "ImageQualityReport"
+    component: "Image Quality Assessment"
+    type: "schema"
+    responsibilities:
+      - "Represent focus score, quality status, and any quality warnings"
+      - "Provide a consistent quality object for decisions and reporting"
+    dependencies: []
+    signatures:
+      - type: "schema"
+        name: "ImageQualityReport"
+        inputs:
+          - name: "focus_score"
+            type: "float"
+            required: true
+          - name: "is_usable"
+            type: "bool"
+            required: true
+          - name: "warnings"
+            type: "list[str]"
+            required: false
+            default: "[]"
+        output: "ImageQualityReport"
+        description: "Stores focus and image-quality assessment results"
+
+  - name: "CircularBoundaryDetector"
+    component: "Boundary Localization"
+    type: "class"
+    responsibilities:
+      - "Locate pupil and outer iris boundaries using Daugman's integro-differential detector or an equivalent circular edge detector"
+      - "Estimate pupil and iris center coordinates and radii independently"
+      - "Return boundary geometry needed for normalization and mask generation"
+    dependencies: ["ImageMetadata", "ImageQualityReport"]
+    signatures:
+      - type: "class"
+        name: "CircularBoundaryDetector"
+        inputs:
+          - name: "radius_ranges"
+            type: "dict"
+            required: true
+        output: "CircularBoundaryDetector"
+        description: "Creates a detector for pupil and limbus circular boundaries"
+      - type: "method"
+        name: "detect"
+        inputs:
+          - name: "image"
+            type: "ImageMetadata"
+            required: true
+        output: "BoundaryGeometry"
+        description: "Finds pupil and iris boundaries in an eye image"
+        belongs_to: "CircularBoundaryDetector"
+
+  - name: "BoundaryGeometry"
+    component: "Boundary Localization"
+    type: "schema"
+    responsibilities:
+      - "Represent pupil and iris centers, radii, and localization confidence"
+      - "Provide boundary data to normalization and mask generation"
+    dependencies: []
+    signatures:
+      - type: "schema"
+        name: "BoundaryGeometry"
+        inputs:
+          - name: "pupil_center"
+            type: "tuple[float, float]"
+            required: true
+          - name: "pupil_radius"
+            type: "float"
+            required: true
+          - name: "iris_center"
+            type: "tuple[float, float]"
+            required: true
+          - name: "iris_radius"
+            type: "float"
+            required: true
+          - name: "confidence"
+            type: "float"
+            required: true
+        output: "BoundaryGeometry"
+        description: "Stores pupil and iris boundary localization results"
+
+  - name: "EyelidDetector"
+    component: "Occlusion & Mask Detection"
+    type: "class"
+    responsibilities:
+      - "Detect upper and lower eyelid occlusions over the iris"
+      - "Produce eyelid mask regions aligned with the original eye image"
+    dependencies: ["ImageMetadata", "BoundaryGeometry"]
+    signatures:
+      - type: "class"
+        name: "EyelidDetector"
+        inputs: []
+        output: "EyelidDetector"
+        description: "Creates an eyelid occlusion detector"
+      - type: "method"
+        name: "detect"
+        inputs:
+          - name: "image"
+            type: "ImageMetadata"
+            required: true
+          - name: "boundaries"
+            type: "BoundaryGeometry"
+            required: true
+        output: "ndarray"
+        description: "Returns a binary eyelid occlusion mask"
+        belongs_to: "EyelidDetector"
+
+  - name: "EyelashDetector"
+    component: "Occlusion & Mask Detection"
+    type: "class"
+    responsibilities:
+      - "Detect eyelash occlusions over the iris"
+      - "Produce eyelash mask regions aligned with the original eye image"
+      - "Keep eyelash detection separate from reflection and mask-combination logic"
+    dependencies: ["ImageMetadata", "BoundaryGeometry"]
+    signatures:
+      - type: "class"
+        name: "EyelashDetector"
+        inputs: []
+        output: "EyelashDetector"
+        description: "Creates an eyelash occlusion detector"
+      - type: "method"
+        name: "detect"
+        inputs:
+          - name: "image"
+            type: "ImageMetadata"
+            required: true
+          - name: "boundaries"
+            type: "BoundaryGeometry"
+            required: true
+        output: "ndarray"
+        description: "Returns a binary eyelash occlusion mask"
+        belongs_to: "EyelashDetector"
+
+  - name: "ReflectionDetector"
+    component: "Occlusion & Mask Detection"
+    type: "class"
+    responsibilities:
+      - "Detect specular reflections and bright imaging artifacts over the iris"
+      - "Produce reflection mask regions aligned with the original eye image"
+      - "Keep reflection detection separate from eyelid, eyelash, and mask-combination logic"
+    dependencies: ["ImageMetadata", "BoundaryGeometry"]
+    signatures:
+      - type: "class"
+        name: "ReflectionDetector"
+        inputs: []
+        output: "ReflectionDetector"
+        description: "Creates a specular reflection detector"
+      - type: "method"
+        name: "detect"
+        inputs:
+          - name: "image"
+            type: "ImageMetadata"
+            required: true
+          - name: "boundaries"
+            type: "BoundaryGeometry"
+            required: true
+        output: "ndarray"
+        description: "Returns a binary reflection artifact mask"
+        belongs_to: "ReflectionDetector"
+
+  - name: "ArtifactMaskCombiner"
+    component: "Occlusion & Mask Detection"
+    type: "class"
+    responsibilities:
+      - "Combine eyelid, eyelash, reflection, contact-lens, and low-quality-region masks"
+      - "Produce a final segmentation mask that identifies valid and invalid iris regions"
+      - "Compute mask-quality metadata such as valid iris fraction and warnings"
+    dependencies: ["BoundaryGeometry"]
+    signatures:
+      - type: "class"
+        name: "ArtifactMaskCombiner"
+        inputs: []
+        output: "ArtifactMaskCombiner"
+        description: "Creates a combiner for unusable-region masks"
+      - type: "method"
+        name: "combine"
+        inputs:
+          - name: "boundaries"
+            type: "BoundaryGeometry"
+            required: true
+          - name: "eyelid_mask"
+            type: "ndarray"
+            required: true
+          - name: "eyelash_mask"
+            type: "ndarray"
+            required: true
+          - name: "reflection_mask"
+            type: "ndarray"
+            required: true
+          - name: "extra_masks"
+            type: "list[ndarray]"
+            required: false
+            default: "[]"
+        output: "SegmentationMask"
+        description: "Returns a combined segmentation mask and mask-quality metadata"
+        belongs_to: "ArtifactMaskCombiner"
+
+  - name: "SegmentationMask"
+    component: "Occlusion & Mask Detection"
+    type: "schema"
+    responsibilities:
+      - "Represent valid and invalid iris regions before normalization"
+      - "Track mask quality and occlusion coverage"
+    dependencies: []
+    signatures:
+      - type: "schema"
+        name: "SegmentationMask"
+        inputs:
+          - name: "valid_pixels"
+            type: "ndarray"
+            required: true
+          - name: "valid_fraction"
+            type: "float"
+            required: true
+          - name: "warnings"
+            type: "list[str]"
+            required: false
+            default: "[]"
+        output: "SegmentationMask"
+        description: "Stores pre-normalization iris validity mask data"
+
+  - name: "RubberSheetNormalizer"
+    component: "Iris Normalization"
+    type: "class"
+    responsibilities:
+      - "Map the annular iris region into normalized polar rubber-sheet coordinates"
+      - "Normalize both iris texture and mask data with matching coordinate transforms"
+      - "Compensate for pupil dilation, iris size, and eye position"
+    dependencies: ["ImageMetadata", "BoundaryGeometry", "SegmentationMask"]
+    signatures:
+      - type: "class"
+        name: "RubberSheetNormalizer"
+        inputs:
+          - name: "radial_resolution"
+            type: "int"
+            required: true
+          - name: "angular_resolution"
+            type: "int"
+            required: true
+        output: "RubberSheetNormalizer"
+        description: "Creates a normalizer for rubber-sheet iris mapping"
+      - type: "method"
+        name: "normalize"
+        inputs:
+          - name: "image"
+            type: "ImageMetadata"
+            required: true
+          - name: "boundaries"
+            type: "BoundaryGeometry"
+            required: true
+          - name: "mask"
+            type: "SegmentationMask"
+            required: true
+        output: "NormalizedIris"
+        description: "Returns normalized iris texture and aligned normalized mask"
+        belongs_to: "RubberSheetNormalizer"
+
+  - name: "NormalizedIris"
+    component: "Iris Normalization"
+    type: "schema"
+    responsibilities:
+      - "Represent rubber-sheet normalized iris texture"
+      - "Represent the normalized mask aligned to the normalized iris texture"
+      - "Carry normalization metadata used by encoding and reporting"
+    dependencies: []
+    signatures:
+      - type: "schema"
+        name: "NormalizedIris"
+        inputs:
+          - name: "texture"
+            type: "ndarray"
+            required: true
+          - name: "mask"
+            type: "ndarray"
+            required: true
+          - name: "radial_resolution"
+            type: "int"
+            required: true
+          - name: "angular_resolution"
+            type: "int"
+            required: true
+        output: "NormalizedIris"
+        description: "Stores normalized iris texture and aligned normalized mask"
+
+  - name: "GaborResponseProvider"
+    component: "Iris Feature Encoding"
+    type: "interface"
+    responsibilities:
+      - "Define the contract for modules that convert normalized iris texture into complex Gabor responses"
+      - "Allow IrisCodeEncoder to be tested with fake response providers"
+      - "Decouple template encoding from a concrete Gabor filter implementation"
+    dependencies: ["NormalizedIris"]
+    signatures:
+      - type: "interface"
+        name: "apply"
+        inputs:
+          - name: "normalized_iris"
+            type: "NormalizedIris"
+            required: true
+        output: "ndarray"
+        description: "Provides complex phase responses for a normalized iris"
+
+  - name: "GaborFilterBank"
+    component: "Iris Feature Encoding"
+    type: "class"
+    responsibilities:
+      - "Construct multi-scale complex 2D Gabor wavelets for iris phase encoding"
+      - "Use scales spanning roughly 0.15mm to 1.2mm on the iris with frequencies across about 3 octaves"
+      - "Apply filters to normalized iris texture and return complex phase responses"
+    dependencies: ["NormalizedIris"]
+    signatures:
+      - type: "class"
+        name: "GaborFilterBank"
+        inputs:
+          - name: "scales"
+            type: "list[float]"
+            required: true
+          - name: "frequencies"
+            type: "list[float]"
+            required: true
+        output: "GaborFilterBank"
+        description: "Creates a multi-scale complex Gabor filter bank"
+      - type: "method"
+        name: "apply"
+        inputs:
+          - name: "normalized_iris"
+            type: "NormalizedIris"
+            required: true
+        output: "ndarray"
+        description: "Returns complex Gabor phase responses for normalized iris texture"
+        belongs_to: "GaborFilterBank"
+
+  - name: "PhaseBitQuantizer"
+    component: "Iris Feature Encoding"
+    type: "interface"
+    responsibilities:
+      - "Define the contract for converting complex phase responses into binary phase bits"
+      - "Allow IrisCodeEncoder to be tested with fake quantizers"
+      - "Decouple template assembly from a concrete phase quantization implementation"
+    dependencies: []
+    signatures:
+      - type: "interface"
+        name: "quantize"
+        inputs:
+          - name: "responses"
+            type: "ndarray"
+            required: true
+        output: "ndarray"
+        description: "Converts complex Gabor responses into binary phase bits"
+
+  - name: "PhaseQuantizer"
+    component: "Iris Feature Encoding"
+    type: "class"
+    responsibilities:
+      - "Quantize signs of real and imaginary Gabor responses into phase bits"
+      - "Use cyclic gray-code-style quadrant encoding"
+      - "Keep phase-bit quantization separate from template construction"
+    dependencies: []
+    signatures:
+      - type: "class"
+        name: "PhaseQuantizer"
+        inputs: []
+        output: "PhaseQuantizer"
+        description: "Creates a quantizer for Gabor phase responses"
+      - type: "method"
+        name: "quantize"
+        inputs:
+          - name: "responses"
+            type: "ndarray"
+            required: true
+        output: "ndarray"
+        description: "Converts complex Gabor responses into binary phase bits"
+        belongs_to: "PhaseQuantizer"
+
+  - name: "IrisCodeEncoder"
+    component: "Iris Feature Encoding"
+    type: "class"
+    responsibilities:
+      - "Coordinate Gabor filtering and phase quantization"
+      - "Create IrisCode phase bits and an aligned mask bit vector"
+      - "Attach identity and encoding metadata to the final template"
+    dependencies: ["NormalizedIris", "GaborResponseProvider", "PhaseBitQuantizer", "IrisCodeTemplate"]
+    signatures:
+      - type: "class"
+        name: "IrisCodeEncoder"
+        inputs:
+          - name: "filter_bank"
+            type: "GaborResponseProvider"
+            required: true
+          - name: "phase_quantizer"
+            type: "PhaseBitQuantizer"
+            required: true
+        output: "IrisCodeEncoder"
+        description: "Creates an encoder for IrisCode-style templates"
+      - type: "method"
+        name: "encode"
+        inputs:
+          - name: "normalized_iris"
+            type: "NormalizedIris"
+            required: true
+          - name: "identity"
+            type: "str"
+            required: false
+            default: "None"
+        output: "IrisCodeTemplate"
+        description: "Encodes normalized iris texture into phase bits and aligned mask bits"
+        belongs_to: "IrisCodeEncoder"
+
+  - name: "IrisCodeTemplate"
+    component: "IrisCode Template"
+    type: "schema"
+    responsibilities:
+      - "Represent a binary IrisCode phase-bit vector"
+      - "Represent an aligned mask-bit vector of the same length"
+      - "Store identity, eye-side, quality, and encoding metadata"
+    dependencies: []
+    signatures:
+      - type: "schema"
+        name: "IrisCodeTemplate"
+        inputs:
+          - name: "code_bits"
+            type: "ndarray"
+            required: true
+          - name: "mask_bits"
+            type: "ndarray"
+            required: true
+          - name: "identity"
+            type: "str"
+            required: false
+            default: "None"
+          - name: "metadata"
+            type: "dict"
+            required: false
+            default: "{}"
+        output: "IrisCodeTemplate"
+        description: "Stores IrisCode bits, aligned mask bits, and identity metadata"
+
+  - name: "TemplateSerializer"
+    component: "IrisCode Template"
+    type: "class"
+    responsibilities:
+      - "Serialize IrisCode templates to a portable local file format"
+      - "Deserialize templates while preserving code bits, mask bits, and metadata"
+      - "Validate that code and mask vectors remain aligned and equal length"
+    dependencies: ["IrisCodeTemplate"]
+    signatures:
+      - type: "class"
+        name: "TemplateSerializer"
+        inputs: []
+        output: "TemplateSerializer"
+        description: "Creates a serializer for IrisCode templates"
+      - type: "method"
+        name: "save"
+        inputs:
+          - name: "template"
+            type: "IrisCodeTemplate"
+            required: true
+          - name: "path"
+            type: "str"
+            required: true
+        output: "None"
+        description: "Writes an IrisCode template to disk"
+        belongs_to: "TemplateSerializer"
+      - type: "method"
+        name: "load"
+        inputs:
+          - name: "path"
+            type: "str"
+            required: true
+        output: "IrisCodeTemplate"
+        description: "Loads an IrisCode template from disk"
+        belongs_to: "TemplateSerializer"
+
+  - name: "TemplateRepository"
+    component: "Template Gallery"
+    type: "interface"
+    responsibilities:
+      - "Define the storage contract used by TemplateGallery"
+      - "Allow TemplateGallery to be tested with in-memory fake repositories"
+      - "Decouple gallery lookup behavior from file-backed persistence"
+    dependencies: ["IrisCodeTemplate"]
+    signatures:
+      - type: "interface"
+        name: "save"
+        inputs:
+          - name: "template"
+            type: "IrisCodeTemplate"
+            required: true
+        output: "None"
+        description: "Persists an IrisCode template"
+      - type: "interface"
+        name: "load_all"
+        inputs: []
+        output: "list[IrisCodeTemplate]"
+        description: "Loads all stored IrisCode templates"
+
+  - name: "TemplateStore"
+    component: "Template Gallery"
+    type: "class"
+    responsibilities:
+      - "Persist IrisCode templates to local file-based storage"
+      - "Load stored templates from disk using the template serializer"
+      - "Keep file paths and storage layout separate from gallery lookup behavior"
+    dependencies: ["IrisCodeTemplate", "TemplateSerializer"]
+    signatures:
+      - type: "class"
+        name: "TemplateStore"
+        inputs:
+          - name: "storage_path"
+            type: "str"
+            required: true
+          - name: "serializer"
+            type: "TemplateSerializer"
+            required: true
+        output: "TemplateStore"
+        description: "Creates file-backed storage for IrisCode templates"
+      - type: "method"
+        name: "save"
+        inputs:
+          - name: "template"
+            type: "IrisCodeTemplate"
+            required: true
+        output: "None"
+        description: "Persists an IrisCode template to local storage"
+        belongs_to: "TemplateStore"
+      - type: "method"
+        name: "load_all"
+        inputs: []
+        output: "list[IrisCodeTemplate]"
+        description: "Loads all stored IrisCode templates"
+        belongs_to: "TemplateStore"
+
+  - name: "TemplateGallery"
+    component: "Template Gallery"
+    type: "class"
+    responsibilities:
+      - "Manage enrolled IrisCode templates for verification and identification"
+      - "Support add, list, and identity-based lookup operations"
+      - "Delegate persistence to a TemplateRepository interface"
+      - "Keep gallery management separate from matching and decision logic"
+    dependencies: ["IrisCodeTemplate", "TemplateRepository"]
+    signatures:
+      - type: "class"
+        name: "TemplateGallery"
+        inputs:
+          - name: "template_repository"
+            type: "TemplateRepository"
+            required: true
+        output: "TemplateGallery"
+        description: "Creates a gallery abstraction over enrolled IrisCode templates"
+      - type: "method"
+        name: "add"
+        inputs:
+          - name: "template"
+            type: "IrisCodeTemplate"
+            required: true
+        output: "None"
+        description: "Adds an enrolled IrisCode template to the gallery"
+        belongs_to: "TemplateGallery"
+      - type: "method"
+        name: "list_templates"
+        inputs: []
+        output: "list[IrisCodeTemplate]"
+        description: "Returns all enrolled templates"
+        belongs_to: "TemplateGallery"
+      - type: "method"
+        name: "get_by_identity"
+        inputs:
+          - name: "identity"
+            type: "str"
+            required: true
+        output: "list[IrisCodeTemplate]"
+        description: "Returns enrolled templates for a specific identity"
+        belongs_to: "TemplateGallery"
+
+  - name: "MaskedHammingMatcher"
+    component: "Template Matcher"
+    type: "class"
+    responsibilities:
+      - "Compute masked fractional Hamming Distance between two IrisCode templates"
+      - "Use XOR for code-bit differences and AND for mutually valid mask bits"
+      - "Return score, valid-bit count, and low-valid-bit status"
+    dependencies: ["IrisCodeTemplate"]
+    signatures:
+      - type: "class"
+        name: "MaskedHammingMatcher"
+        inputs:
+          - name: "minimum_valid_bits"
+            type: "int"
+            required: true
+        output: "MaskedHammingMatcher"
+        description: "Creates a matcher for masked fractional Hamming Distance"
+      - type: "method"
+        name: "compare"
+        inputs:
+          - name: "probe"
+            type: "IrisCodeTemplate"
+            required: true
+          - name: "candidate"
+            type: "IrisCodeTemplate"
+            required: true
+        output: "MatchScore"
+        description: "Compares two templates without orientation shifts"
+        belongs_to: "MaskedHammingMatcher"
+
+  - name: "TemplateComparator"
+    component: "Template Matcher"
+    type: "interface"
+    responsibilities:
+      - "Define the comparison contract used by rotation compensation and workflow orchestration"
+      - "Allow RotationCompensator to be tested with fake comparators"
+      - "Decouple rotation search from a concrete Hamming Distance implementation"
+    dependencies: ["IrisCodeTemplate", "MatchScore"]
+    signatures:
+      - type: "interface"
+        name: "compare"
+        inputs:
+          - name: "probe"
+            type: "IrisCodeTemplate"
+            required: true
+          - name: "candidate"
+            type: "IrisCodeTemplate"
+            required: true
+        output: "MatchScore"
+        description: "Compares two IrisCode templates and returns a match score"
+
+  - name: "RotationCompensator"
+    component: "Template Matcher"
+    type: "class"
+    responsibilities:
+      - "Generate cyclic angular shifts of an IrisCode template"
+      - "Compare shifted templates and select the minimum Hamming Distance"
+      - "Record the selected shift used for the best score"
+    dependencies: ["IrisCodeTemplate", "TemplateComparator"]
+    signatures:
+      - type: "class"
+        name: "RotationCompensator"
+        inputs:
+          - name: "shift_steps"
+            type: "list[int]"
+            required: true
+          - name: "matcher"
+            type: "TemplateComparator"
+            required: true
+        output: "RotationCompensator"
+        description: "Creates a best-of-n rotation compensation matcher"
+      - type: "method"
+        name: "compare_with_shifts"
+        inputs:
+          - name: "probe"
+            type: "IrisCodeTemplate"
+            required: true
+          - name: "candidate"
+            type: "IrisCodeTemplate"
+            required: true
+        output: "MatchScore"
+        description: "Returns the best match score across cyclic angular shifts"
+        belongs_to: "RotationCompensator"
+
+  - name: "MatchScore"
+    component: "Template Matcher"
+    type: "schema"
+    responsibilities:
+      - "Represent Hamming Distance score, valid-bit count, and selected rotation shift"
+      - "Carry matching warnings into decision logic"
+    dependencies: []
+    signatures:
+      - type: "schema"
+        name: "MatchScore"
+        inputs:
+          - name: "hamming_distance"
+            type: "float"
+            required: true
+          - name: "valid_bits"
+            type: "int"
+            required: true
+          - name: "shift"
+            type: "int"
+            required: false
+            default: "0"
+          - name: "warnings"
+            type: "list[str]"
+            required: false
+            default: "[]"
+        output: "MatchScore"
+        description: "Stores the result of one template comparison"
+
+  - name: "MatchDecisionEngine"
+    component: "Decision Engine"
+    type: "class"
+    responsibilities:
+      - "Apply configurable Hamming Distance thresholds to match scores"
+      - "Reject or downgrade comparisons with too few mutually valid bits"
+      - "Produce verification and identification decisions"
+    dependencies: ["MatchScore", "FalseMatchRiskEstimator"]
+    signatures:
+      - type: "class"
+        name: "MatchDecisionEngine"
+        inputs:
+          - name: "threshold"
+            type: "float"
+            required: true
+          - name: "minimum_valid_bits"
+            type: "int"
+            required: true
+          - name: "risk_model"
+            type: "FalseMatchRiskEstimator"
+            required: false
+            default: "None"
+        output: "MatchDecisionEngine"
+        description: "Creates a decision engine for verification and identification scores"
+      - type: "method"
+        name: "decide_verification"
+        inputs:
+          - name: "score"
+            type: "MatchScore"
+            required: true
+        output: "RecognitionResult"
+        description: "Returns a match or non-match decision for one-to-one verification"
+        belongs_to: "MatchDecisionEngine"
+      - type: "method"
+        name: "decide_identification"
+        inputs:
+          - name: "scores"
+            type: "list[MatchScore]"
+            required: true
+          - name: "gallery_size"
+            type: "int"
+            required: true
+        output: "RecognitionResult"
+        description: "Returns the best candidate decision for one-to-many identification"
+        belongs_to: "MatchDecisionEngine"
+
+  - name: "FalseMatchRiskEstimator"
+    component: "Decision Engine"
+    type: "interface"
+    responsibilities:
+      - "Define the contract for estimating one-to-many false-match risk"
+      - "Allow MatchDecisionEngine to be tested without the concrete risk model"
+      - "Decouple threshold decisions from the implementation of gallery-size risk calculations"
+    dependencies: []
+    signatures:
+      - type: "interface"
+        name: "gallery_false_match_probability"
+        inputs:
+          - name: "single_comparison_probability"
+            type: "float"
+            required: true
+          - name: "gallery_size"
+            type: "int"
+            required: true
+        output: "float"
+        description: "Returns probability of at least one false match across a gallery search"
+
+  - name: "FalseMatchRiskModel"
+    component: "Decision Engine"
+    type: "class"
+    responsibilities:
+      - "Estimate database-size false-match scaling for one-to-many identification"
+      - "Use P_N = 1 - (1 - P_1)^N to convert single-comparison risk into gallery-search risk"
+      - "Provide risk metadata for result reporting"
+    dependencies: []
+    signatures:
+      - type: "class"
+        name: "FalseMatchRiskModel"
+        inputs: []
+        output: "FalseMatchRiskModel"
+        description: "Creates a risk model for one-to-many false-match scaling"
+      - type: "method"
+        name: "gallery_false_match_probability"
+        inputs:
+          - name: "single_comparison_probability"
+            type: "float"
+            required: true
+          - name: "gallery_size"
+            type: "int"
+            required: true
+        output: "float"
+        description: "Returns probability of at least one false match across a gallery search"
+        belongs_to: "FalseMatchRiskModel"
+
+  - name: "RecognitionResult"
+    component: "Result Reporting"
+    type: "schema"
+    responsibilities:
+      - "Represent match decision, identity candidate, score, confidence, and warnings"
+      - "Carry quality, segmentation, mask, and valid-bit metadata to users"
+    dependencies: ["MatchScore", "ImageQualityReport"]
+    signatures:
+      - type: "schema"
+        name: "RecognitionResult"
+        inputs:
+          - name: "decision"
+            type: "str"
+            required: true
+          - name: "score"
+            type: "MatchScore"
+            required: false
+            default: "None"
+          - name: "identity"
+            type: "str"
+            required: false
+            default: "None"
+          - name: "confidence"
+            type: "str"
+            required: false
+            default: "None"
+          - name: "metadata"
+            type: "dict"
+            required: false
+            default: "{}"
+        output: "RecognitionResult"
+        description: "Stores the final recognition result and supporting metadata"
+
+  - name: "ResultFormatter"
+    component: "Result Reporting"
+    type: "class"
+    responsibilities:
+      - "Format verification and identification results for CLI, logs, or reports"
+      - "Include score, valid-bit count, selected shift, warnings, and quality metadata"
+      - "Keep result presentation separate from recognition decisions"
+    dependencies: ["RecognitionResult"]
+    signatures:
+      - type: "class"
+        name: "ResultFormatter"
+        inputs: []
+        output: "ResultFormatter"
+        description: "Creates a formatter for recognition results"
+      - type: "method"
+        name: "format"
+        inputs:
+          - name: "result"
+            type: "RecognitionResult"
+            required: true
+        output: "str"
+        description: "Formats a recognition result for display"
+        belongs_to: "ResultFormatter"

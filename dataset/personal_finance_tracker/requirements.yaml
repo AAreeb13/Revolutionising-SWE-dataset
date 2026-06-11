@@ -1,0 +1,35 @@
+requirements:
+  functional:
+    - Must be a local CLI tool
+    - Must be single-user
+    - Add account with name and type (checking, savings, credit, cash)
+    - List accounts with id, name, type, and balance
+    - Rename account with id and new name
+    - Delete account with id (only if no transactions)
+    - Add category with name and kind (income, expense)
+    - List categories with id, name, and kind
+    - Add transaction with account id, category id, type (income, expense), amount, date, and description
+    - List transactions with id, date, account name, category name, type, amount, and description with optional filters
+    - Edit transaction with id and optional new values for account, category, type, amount, date, and description
+    - Delete transaction with id
+    - command "summary monthly YYYY-MM" to show total income, expenses, net amount, ending balance, and totals by category for that month
+    - Add recurring transaction with account id, category id, type, amount, start date, interval (monthly), and description
+    - Run recurring transactions up to a given date without generating duplicates 
+  non_functional:
+    - Python 3.13
+    - clear success or error messages
+    - no duplicate transactions or accounts
+    - invalid input must not modify the database
+    - operations must be atomic
+    - use argparse for CLI parsing
+    - use sqlite3 for storage
+    - use pytest for tests
+  assumptions:
+  constraints:
+  out_of_scope:
+  - Web UI
+  - Authentication
+  - Encryption
+  - Cloud sync
+  - Bank integrations
+  - Payment processing

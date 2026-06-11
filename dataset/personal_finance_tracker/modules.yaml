@@ -1,0 +1,830 @@
+modules:
+  - name: "Database"
+    component: "Persistence"
+    type: "class"
+    responsibilities:
+      - "Open and configure the SQLite database connection"
+      - "Create required tables, indexes, constraints, and foreign keys"
+      - "Provide atomic transaction handling for multi-step writes"
+      - "Keep SQLite connection lifecycle separate from business logic"
+    dependencies: []
+    signatures:
+      - type: "class"
+        name: "Database"
+        inputs:
+          - name: "path"
+            type: "str"
+            required: true
+        output: "Database"
+        description: "Creates a database helper for the configured SQLite file"
+      - type: "method"
+        name: "initialize"
+        inputs: []
+        output: "None"
+        description: "Creates the application schema when it does not already exist"
+        belongs_to: "Database"
+      - type: "method"
+        name: "connect"
+        inputs: []
+        output: "sqlite3.Connection"
+        description: "Returns a SQLite connection with row access and foreign keys enabled"
+        belongs_to: "Database"
+      - type: "method"
+        name: "transaction"
+        inputs: []
+        output: "ContextManager[sqlite3.Connection]"
+        description: "Runs a group of database writes atomically and rolls back on failure"
+        belongs_to: "Database"
+
+  - name: "AccountRepository"
+    component: "Persistence"
+    type: "class"
+    responsibilities:
+      - "Execute SQL for account creation, lookup, listing, renaming, deletion, and balance updates"
+      - "Keep account table details hidden from service and CLI modules"
+      - "Store account balances as integer cents"
+    dependencies: ["Database"]
+    signatures:
+      - type: "class"
+        name: "AccountRepository"
+        inputs:
+          - name: "database"
+            type: "Database"
+            required: true
+        output: "AccountRepository"
+        description: "Creates an account repository backed by SQLite"
+      - type: "method"
+        name: "create"
+        inputs:
+          - name: "name"
+            type: "str"
+            required: true
+          - name: "account_type"
+            type: "str"
+            required: true
+        output: "int"
+        description: "Inserts an account with a zero starting balance and returns its id"
+        belongs_to: "AccountRepository"
+      - type: "method"
+        name: "list_all"
+        inputs: []
+        output: "list[dict]"
+        description: "Returns all account rows sorted by id"
+        belongs_to: "AccountRepository"
+      - type: "method"
+        name: "get_by_id"
+        inputs:
+          - name: "account_id"
+            type: "int"
+            required: true
+        output: "dict | None"
+        description: "Returns an account row by id when it exists"
+        belongs_to: "AccountRepository"
+      - type: "method"
+        name: "get_by_name"
+        inputs:
+          - name: "name"
+            type: "str"
+            required: true
+        output: "dict | None"
+        description: "Returns an account row by name when it exists"
+        belongs_to: "AccountRepository"
+      - type: "method"
+        name: "rename"
+        inputs:
+          - name: "account_id"
+            type: "int"
+            required: true
+          - name: "new_name"
+            type: "str"
+            required: true
+        output: "None"
+        description: "Updates an account name"
+        belongs_to: "AccountRepository"
+      - type: "method"
+        name: "delete"
+        inputs:
+          - name: "account_id"
+            type: "int"
+            required: true
+        output: "None"
+        description: "Deletes an account row"
+        belongs_to: "AccountRepository"
+      - type: "method"
+        name: "apply_balance_delta"
+        inputs:
+          - name: "account_id"
+            type: "int"
+            required: true
+          - name: "delta_cents"
+            type: "int"
+            required: true
+        output: "None"
+        description: "Applies a signed integer-cent delta to an account balance"
+        belongs_to: "AccountRepository"
+
+  - name: "CategoryRepository"
+    component: "Persistence"
+    type: "class"
+    responsibilities:
+      - "Execute SQL for category creation, lookup, and listing"
+      - "Keep category table details hidden from service and CLI modules"
+      - "Expose category kind data needed for transaction validation"
+    dependencies: ["Database"]
+    signatures:
+      - type: "class"
+        name: "CategoryRepository"
+        inputs:
+          - name: "database"
+            type: "Database"
+            required: true
+        output: "CategoryRepository"
+        description: "Creates a category repository backed by SQLite"
+      - type: "method"
+        name: "create"
+        inputs:
+          - name: "name"
+            type: "str"
+            required: true
+          - name: "kind"
+            type: "str"
+            required: true
+        output: "int"
+        description: "Inserts a category and returns its id"
+        belongs_to: "CategoryRepository"
+      - type: "method"
+        name: "list_all"
+        inputs: []
+        output: "list[dict]"
+        description: "Returns all category rows sorted by id"
+        belongs_to: "CategoryRepository"
+      - type: "method"
+        name: "get_by_id"
+        inputs:
+          - name: "category_id"
+            type: "int"
+            required: true
+        output: "dict | None"
+        description: "Returns a category row by id when it exists"
+        belongs_to: "CategoryRepository"
+      - type: "method"
+        name: "get_by_name"
+        inputs:
+          - name: "name"
+            type: "str"
+            required: true
+        output: "dict | None"
+        description: "Returns a category row by name when it exists"
+        belongs_to: "CategoryRepository"
+
+  - name: "TransactionRepository"
+    component: "Persistence"
+    type: "class"
+    responsibilities:
+      - "Execute SQL for transaction creation, lookup, listing, editing, and deletion"
+      - "Apply transaction list filters and joins to account and category names"
+      - "Track recurring source metadata for generated transactions"
+    dependencies: ["Database"]
+    signatures:
+      - type: "class"
+        name: "TransactionRepository"
+        inputs:
+          - name: "database"
+            type: "Database"
+            required: true
+        output: "TransactionRepository"
+        description: "Creates a transaction repository backed by SQLite"
+      - type: "method"
+        name: "create"
+        inputs:
+          - name: "transaction"
+            type: "dict"
+            required: true
+        output: "int"
+        description: "Inserts a transaction row and returns its id"
+        belongs_to: "TransactionRepository"
+      - type: "method"
+        name: "get_by_id"
+        inputs:
+          - name: "transaction_id"
+            type: "int"
+            required: true
+        output: "dict | None"
+        description: "Returns a transaction row by id when it exists"
+        belongs_to: "TransactionRepository"
+      - type: "method"
+        name: "list_filtered"
+        inputs:
+          - name: "filters"
+            type: "dict"
+            required: true
+        output: "list[dict]"
+        description: "Returns filtered transactions sorted by date ascending, then id ascending"
+        belongs_to: "TransactionRepository"
+      - type: "method"
+        name: "update"
+        inputs:
+          - name: "transaction_id"
+            type: "int"
+            required: true
+          - name: "transaction"
+            type: "dict"
+            required: true
+        output: "None"
+        description: "Updates an existing transaction row"
+        belongs_to: "TransactionRepository"
+      - type: "method"
+        name: "delete"
+        inputs:
+          - name: "transaction_id"
+            type: "int"
+            required: true
+        output: "None"
+        description: "Deletes a transaction row"
+        belongs_to: "TransactionRepository"
+      - type: "method"
+        name: "exists_for_account"
+        inputs:
+          - name: "account_id"
+            type: "int"
+            required: true
+        output: "bool"
+        description: "Returns whether any transaction exists for an account"
+        belongs_to: "TransactionRepository"
+
+  - name: "RecurringRepository"
+    component: "Persistence"
+    type: "class"
+    responsibilities:
+      - "Execute SQL for recurring rule creation and listing"
+      - "Detect whether a recurring rule already generated a transaction for a scheduled date"
+      - "Keep recurring rule table details hidden from service and CLI modules"
+    dependencies: ["Database"]
+    signatures:
+      - type: "class"
+        name: "RecurringRepository"
+        inputs:
+          - name: "database"
+            type: "Database"
+            required: true
+        output: "RecurringRepository"
+        description: "Creates a recurring transaction repository backed by SQLite"
+      - type: "method"
+        name: "create_rule"
+        inputs:
+          - name: "rule"
+            type: "dict"
+            required: true
+        output: "int"
+        description: "Inserts a monthly recurring transaction rule and returns its id"
+        belongs_to: "RecurringRepository"
+      - type: "method"
+        name: "list_rules"
+        inputs: []
+        output: "list[dict]"
+        description: "Returns recurring transaction rules sorted by id"
+        belongs_to: "RecurringRepository"
+      - type: "method"
+        name: "generated_transaction_exists"
+        inputs:
+          - name: "recurring_rule_id"
+            type: "int"
+            required: true
+          - name: "scheduled_date"
+            type: "str"
+            required: true
+        output: "bool"
+        description: "Returns whether a rule already generated a transaction for a scheduled date"
+        belongs_to: "RecurringRepository"
+
+  - name: "ReportRepository"
+    component: "Persistence"
+    type: "class"
+    responsibilities:
+      - "Execute SQL for monthly totals, category totals, and ending balance queries"
+      - "Return report-ready aggregate data without formatting it for display"
+      - "Keep reporting queries separate from transaction write queries"
+    dependencies: ["Database"]
+    signatures:
+      - type: "class"
+        name: "ReportRepository"
+        inputs:
+          - name: "database"
+            type: "Database"
+            required: true
+        output: "ReportRepository"
+        description: "Creates a reporting repository backed by SQLite"
+      - type: "method"
+        name: "monthly_totals"
+        inputs:
+          - name: "start_date"
+            type: "str"
+            required: true
+          - name: "end_date"
+            type: "str"
+            required: true
+        output: "dict"
+        description: "Returns total income, total expenses, and net amount for a month"
+        belongs_to: "ReportRepository"
+      - type: "method"
+        name: "monthly_category_totals"
+        inputs:
+          - name: "start_date"
+            type: "str"
+            required: true
+          - name: "end_date"
+            type: "str"
+            required: true
+        output: "list[dict]"
+        description: "Returns monthly totals grouped by category"
+        belongs_to: "ReportRepository"
+      - type: "method"
+        name: "ending_balance"
+        inputs: []
+        output: "int"
+        description: "Returns the current ending balance across all accounts in integer cents"
+        belongs_to: "ReportRepository"
+
+  - name: "InputValidation"
+    component: "Validation"
+    type: "function"
+    responsibilities:
+      - "Validate allowed account types, category kinds, and transaction types"
+      - "Validate ISO dates and YYYY-MM monthly summary arguments"
+      - "Convert user-entered decimal amounts into positive integer cents"
+      - "Validate monthly interval input for recurring rules"
+      - "Keep parsing and value checks independent from SQLite"
+    dependencies: []
+    signatures:
+      - type: "function"
+        name: "parse_amount_cents"
+        inputs:
+          - name: "amount"
+            type: "str"
+            required: true
+        output: "int"
+        description: "Parses a positive decimal amount and returns integer cents"
+      - type: "function"
+        name: "parse_iso_date"
+        inputs:
+          - name: "value"
+            type: "str"
+            required: true
+        output: "datetime.date"
+        description: "Parses a valid YYYY-MM-DD date"
+      - type: "function"
+        name: "parse_month"
+        inputs:
+          - name: "value"
+            type: "str"
+            required: true
+        output: "tuple[datetime.date, datetime.date]"
+        description: "Parses YYYY-MM into inclusive month start and end dates"
+      - type: "function"
+        name: "validate_choice"
+        inputs:
+          - name: "value"
+            type: "str"
+            required: true
+          - name: "allowed"
+            type: "set[str]"
+            required: true
+        output: "str"
+        description: "Validates that a string belongs to an allowed set"
+
+  - name: "AccountService"
+    component: "Account Management"
+    type: "class"
+    responsibilities:
+      - "Create accounts with unique names and zero starting balance"
+      - "List accounts with id, name, type, and current balance"
+      - "Rename accounts while preserving name uniqueness"
+      - "Delete only accounts that have no transactions"
+    dependencies: ["AccountRepository", "TransactionRepository", "InputValidation"]
+    signatures:
+      - type: "class"
+        name: "AccountService"
+        inputs:
+          - name: "account_repository"
+            type: "AccountRepository"
+            required: true
+          - name: "transaction_repository"
+            type: "TransactionRepository"
+            required: true
+        output: "AccountService"
+        description: "Creates an account service backed by account and transaction repositories"
+      - type: "method"
+        name: "add_account"
+        inputs:
+          - name: "name"
+            type: "str"
+            required: true
+          - name: "account_type"
+            type: "str"
+            required: true
+        output: "int"
+        description: "Adds an account and returns its generated id"
+        belongs_to: "AccountService"
+      - type: "method"
+        name: "list_accounts"
+        inputs: []
+        output: "list[dict]"
+        description: "Returns all accounts sorted by id"
+        belongs_to: "AccountService"
+      - type: "method"
+        name: "rename_account"
+        inputs:
+          - name: "account_id"
+            type: "int"
+            required: true
+          - name: "new_name"
+            type: "str"
+            required: true
+        output: "None"
+        description: "Renames an existing account when the new name is unused"
+        belongs_to: "AccountService"
+      - type: "method"
+        name: "delete_account"
+        inputs:
+          - name: "account_id"
+            type: "int"
+            required: true
+        output: "None"
+        description: "Deletes an account only when it has no transactions"
+        belongs_to: "AccountService"
+
+  - name: "CategoryService"
+    component: "Category Management"
+    type: "class"
+    responsibilities:
+      - "Create income and expense categories with unique names"
+      - "List categories with id, name, and kind"
+      - "Provide category kind checks for transaction and recurring workflows"
+    dependencies: ["CategoryRepository", "InputValidation"]
+    signatures:
+      - type: "class"
+        name: "CategoryService"
+        inputs:
+          - name: "category_repository"
+            type: "CategoryRepository"
+            required: true
+        output: "CategoryService"
+        description: "Creates a category service backed by the category repository"
+      - type: "method"
+        name: "add_category"
+        inputs:
+          - name: "name"
+            type: "str"
+            required: true
+          - name: "kind"
+            type: "str"
+            required: true
+        output: "int"
+        description: "Adds a category and returns its generated id"
+        belongs_to: "CategoryService"
+      - type: "method"
+        name: "list_categories"
+        inputs: []
+        output: "list[dict]"
+        description: "Returns all categories sorted by id"
+        belongs_to: "CategoryService"
+
+  - name: "TransactionService"
+    component: "Transaction Management"
+    type: "class"
+    responsibilities:
+      - "Validate account, category, type, amount, date, and description before writes"
+      - "Add income and expense transactions"
+      - "Update account balances atomically when transactions are added, edited, or deleted"
+      - "List transactions sorted by date ascending, then id ascending with optional filters"
+      - "Recompute balance effects correctly when transaction account, type, or amount changes"
+    dependencies:
+      - "Database"
+      - "AccountRepository"
+      - "CategoryRepository"
+      - "TransactionRepository"
+      - "InputValidation"
+    signatures:
+      - type: "class"
+        name: "TransactionService"
+        inputs:
+          - name: "database"
+            type: "Database"
+            required: true
+          - name: "account_repository"
+            type: "AccountRepository"
+            required: true
+          - name: "category_repository"
+            type: "CategoryRepository"
+            required: true
+          - name: "transaction_repository"
+            type: "TransactionRepository"
+            required: true
+        output: "TransactionService"
+        description: "Creates a transaction service that coordinates validation, repository writes, and database transactions"
+      - type: "method"
+        name: "add_transaction"
+        inputs:
+          - name: "account_id"
+            type: "int"
+            required: true
+          - name: "category_id"
+            type: "int"
+            required: true
+          - name: "transaction_type"
+            type: "str"
+            required: true
+          - name: "amount"
+            type: "str"
+            required: true
+          - name: "date"
+            type: "str"
+            required: true
+          - name: "description"
+            type: "str"
+            required: true
+          - name: "recurring_rule_id"
+            type: "int"
+            required: false
+            default: "None"
+          - name: "scheduled_date"
+            type: "str"
+            required: false
+            default: "None"
+        output: "int"
+        description: "Adds a transaction, updates the account balance, and returns the transaction id"
+        belongs_to: "TransactionService"
+      - type: "method"
+        name: "list_transactions"
+        inputs:
+          - name: "account_id"
+            type: "int"
+            required: false
+            default: "None"
+          - name: "category_id"
+            type: "int"
+            required: false
+            default: "None"
+          - name: "transaction_type"
+            type: "str"
+            required: false
+            default: "None"
+          - name: "from_date"
+            type: "str"
+            required: false
+            default: "None"
+          - name: "to_date"
+            type: "str"
+            required: false
+            default: "None"
+        output: "list[dict]"
+        description: "Returns filtered transactions with account and category names"
+        belongs_to: "TransactionService"
+      - type: "method"
+        name: "edit_transaction"
+        inputs:
+          - name: "transaction_id"
+            type: "int"
+            required: true
+          - name: "account_id"
+            type: "int"
+            required: false
+            default: "None"
+          - name: "category_id"
+            type: "int"
+            required: false
+            default: "None"
+          - name: "transaction_type"
+            type: "str"
+            required: false
+            default: "None"
+          - name: "amount"
+            type: "str"
+            required: false
+            default: "None"
+          - name: "date"
+            type: "str"
+            required: false
+            default: "None"
+          - name: "description"
+            type: "str"
+            required: false
+            default: "None"
+        output: "None"
+        description: "Edits a transaction and atomically applies the correct balance reversal and new balance effect"
+        belongs_to: "TransactionService"
+      - type: "method"
+        name: "delete_transaction"
+        inputs:
+          - name: "transaction_id"
+            type: "int"
+            required: true
+        output: "None"
+        description: "Deletes a transaction and reverses its balance effect"
+        belongs_to: "TransactionService"
+
+  - name: "RecurringService"
+    component: "Recurring Transactions"
+    type: "class"
+    responsibilities:
+      - "Create monthly recurring transaction rules without immediately creating transactions"
+      - "Calculate due dates for monthly recurring rules"
+      - "Generate all due recurring transactions up to and including a target date"
+      - "Prevent duplicate generated transactions when run repeatedly for the same date"
+      - "Delegate generated transaction writes to TransactionService"
+    dependencies:
+      - "AccountRepository"
+      - "CategoryRepository"
+      - "RecurringRepository"
+      - "TransactionService"
+      - "InputValidation"
+    signatures:
+      - type: "class"
+        name: "RecurringService"
+        inputs:
+          - name: "account_repository"
+            type: "AccountRepository"
+            required: true
+          - name: "category_repository"
+            type: "CategoryRepository"
+            required: true
+          - name: "recurring_repository"
+            type: "RecurringRepository"
+            required: true
+          - name: "transaction_service"
+            type: "TransactionService"
+            required: true
+        output: "RecurringService"
+        description: "Creates a recurring transaction service backed by repositories and transaction service"
+      - type: "method"
+        name: "add_recurring_rule"
+        inputs:
+          - name: "account_id"
+            type: "int"
+            required: true
+          - name: "category_id"
+            type: "int"
+            required: true
+          - name: "transaction_type"
+            type: "str"
+            required: true
+          - name: "amount"
+            type: "str"
+            required: true
+          - name: "start_date"
+            type: "str"
+            required: true
+          - name: "interval"
+            type: "str"
+            required: true
+          - name: "description"
+            type: "str"
+            required: true
+        output: "int"
+        description: "Adds a monthly recurring transaction rule and returns its id"
+        belongs_to: "RecurringService"
+      - type: "method"
+        name: "run_due"
+        inputs:
+          - name: "to_date"
+            type: "str"
+            required: true
+        output: "int"
+        description: "Generates due recurring transactions through the target date and returns the number created"
+        belongs_to: "RecurringService"
+      - type: "method"
+        name: "due_dates_for_rule"
+        inputs:
+          - name: "rule"
+            type: "dict"
+            required: true
+          - name: "to_date"
+            type: "datetime.date"
+            required: true
+        output: "list[datetime.date]"
+        description: "Calculates monthly due dates for a recurring rule"
+        belongs_to: "RecurringService"
+
+  - name: "ReportService"
+    component: "Reporting"
+    type: "class"
+    responsibilities:
+      - "Calculate monthly total income, total expenses, and net amount"
+      - "Calculate ending balance across all accounts for the requested month"
+      - "Group monthly totals by category"
+      - "Return zero totals when no transactions exist for the requested month"
+    dependencies: ["ReportRepository", "InputValidation"]
+    signatures:
+      - type: "class"
+        name: "ReportService"
+        inputs:
+          - name: "report_repository"
+            type: "ReportRepository"
+            required: true
+        output: "ReportService"
+        description: "Creates a reporting service backed by the report repository"
+      - type: "method"
+        name: "monthly_summary"
+        inputs:
+          - name: "month"
+            type: "str"
+            required: true
+        output: "dict"
+        description: "Returns total income, expenses, net amount, ending balance, and category totals for YYYY-MM"
+        belongs_to: "ReportService"
+
+  - name: "Formatter"
+    component: "Formatting"
+    type: "function"
+    responsibilities:
+      - "Format account, category, transaction, recurring, and summary output for terminal display"
+      - "Convert integer cents into user-facing decimal money strings"
+      - "Format clear success and error messages"
+    dependencies: []
+    signatures:
+      - type: "function"
+        name: "format_money"
+        inputs:
+          - name: "amount_cents"
+            type: "int"
+            required: true
+        output: "str"
+        description: "Formats integer cents as a fixed two-decimal currency amount"
+      - type: "function"
+        name: "format_accounts"
+        inputs:
+          - name: "accounts"
+            type: "list[dict]"
+            required: true
+        output: "str"
+        description: "Formats account rows for account list output"
+      - type: "function"
+        name: "format_categories"
+        inputs:
+          - name: "categories"
+            type: "list[dict]"
+            required: true
+        output: "str"
+        description: "Formats category rows for category list output"
+      - type: "function"
+        name: "format_transactions"
+        inputs:
+          - name: "transactions"
+            type: "list[dict]"
+            required: true
+        output: "str"
+        description: "Formats transaction rows for transaction list output"
+      - type: "function"
+        name: "format_monthly_summary"
+        inputs:
+          - name: "summary"
+            type: "dict"
+            required: true
+        output: "str"
+        description: "Formats monthly summary totals and category totals"
+
+  - name: "CLI"
+    component: "CLI Parser"
+    type: "function"
+    responsibilities:
+      - "Build the argparse command tree for account, category, transaction, summary, and recurring commands"
+      - "Wire repositories and services together at startup"
+      - "Dispatch parsed arguments to the appropriate service"
+      - "Print formatted output and return process exit codes"
+      - "Ensure invalid input reports a clear error without modifying the database"
+    dependencies:
+      - "Database"
+      - "AccountRepository"
+      - "CategoryRepository"
+      - "TransactionRepository"
+      - "RecurringRepository"
+      - "ReportRepository"
+      - "AccountService"
+      - "CategoryService"
+      - "TransactionService"
+      - "RecurringService"
+      - "ReportService"
+      - "Formatter"
+    signatures:
+      - type: "function"
+        name: "build_parser"
+        inputs: []
+        output: "argparse.ArgumentParser"
+        description: "Builds the full command-line parser and supported subcommands"
+      - type: "function"
+        name: "create_services"
+        inputs:
+          - name: "database_path"
+            type: "str"
+            required: true
+        output: "dict"
+        description: "Initializes the database, repositories, and service instances for command handlers"
+      - type: "function"
+        name: "main"
+        inputs:
+          - name: "argv"
+            type: "list[str]"
+            required: false
+            default: "None"
+        output: "int"
+        description: "Application entry point for command-line execution"

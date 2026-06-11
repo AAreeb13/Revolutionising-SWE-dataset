@@ -1,0 +1,32 @@
+project_id: "iris_recognition"
+project_prompt: |
+  Build a research-grounded iris recognition software product based on John Daugman's paper "How Iris Recognition Works."
+
+  The goal is not to build a generic image classifier. The product should implement the main ideas of Daugman-style IrisCode recognition: take a monochrome eye image, check whether the image is sharp enough to use, locate the pupil and outer iris boundaries, mask unusable regions such as eyelids, eyelashes, reflections, and other occlusions, normalize the iris into a dimensionless polar/rubber-sheet representation, encode iris texture using multi-scale complex Gabor wavelet phase responses, and compare IrisCode templates using masked fractional Hamming Distance with rotation compensation.
+
+  The paper's central insight is that iris texture has very high variation across different people, while remaining stable enough within the same eye to support reliable biometric recognition. The recognizer should therefore preserve the paper's emphasis on phase information rather than amplitude or colour. Each enrolled iris should be represented as a compact binary IrisCode-style template of approximately 2,048 phase bits, plus a mask bit vector of the same length that marks which bits are valid for comparison.
+
+  The implementation must include the core mathematical behavior from the paper:
+  1. Iris and pupil boundary localization should use Daugman's integro-differential circular edge detector, or an equivalent detector, to estimate the center and radius of the pupil and limbus boundaries. The pupil and iris should not be assumed to be concentric.
+  2. Rubber-sheet normalization must map the annular iris region into normalized coordinates using:
+     I(x(r, theta), y(r, theta)) -> I(r, theta)
+     x(r, theta) = (1 - r) * xp(theta) + r * xs(theta)
+     y(r, theta) = (1 - r) * yp(theta) + r * ys(theta)
+     where (xp, yp) are pupil-boundary points, (xs, ys) are outer iris-boundary points, r is in [0, 1], and theta is in [0, 2*pi].
+  3. Gabor phase encoding must project normalized iris texture onto multi-scale complex-valued 2D Gabor wavelets and quantize the signs of real and imaginary responses into phase bits. Use wavelet parameters spanning roughly 0.15mm to 1.2mm on the iris, with frequencies spanning about 3 octaves in inverse proportion to angular scale.
+  4. Phase responses should be quantized into cyclic gray-code-style quadrant codes, so adjacent phase quadrants differ by one bit.
+  5. Template matching must compute masked fractional Hamming Distance:
+     HD = norm((code_a XOR code_b) AND mask_a AND mask_b) / norm(mask_a AND mask_b)
+     Only mutually unmasked bits may contribute to the score.
+  6. Matching must support cyclic angular shifts of the IrisCode for orientation compensation. The retained score should be the minimum Hamming Distance across the tested shifts.
+  7. One-to-many identification must account for database-size false-match scaling:
+     P_N = 1 - (1 - P_1)^N
+     where P_1 is the single-comparison false-match probability and P_N is the chance of at least one false match while searching N unrelated templates.
+
+  The product should support one-to-one verification and one-to-many identification. It should report the match score, decision, quality information, and mask/valid-bit information. A comparison must be rejected or marked low-confidence when too few mutually unmasked bits are available. The Hamming Distance threshold should be configurable, with HD <= 0.32 treated as a strong-match reference point under conditions comparable to those in the paper.
+
+  The software should be robust to common acquisition issues described in the paper: imperfect focus, illumination variation, camera gain changes, pupil dilation, moderate eye or head rotation, eyelid and eyelash occlusion, specular reflections, and contact-lens artifacts. It should require enough image resolution to capture iris texture, using at least 70 pixels in iris radius and preferably 100 to 140 pixels. Near-infrared imagery in the 700nm to 900nm range is preferred, especially for dark irises.
+
+  Keep the scope focused. Do not build face recognition, retinal scanning, medical diagnosis, iridology, general eye tracking, national-scale deployment infrastructure, encryption/authentication systems, consent workflows, or camera hardware. Do not replace the Daugman/IrisCode approach with an unrelated deep learning classifier unless explicitly asked. Spoof or liveness detection is out of scope unless explicitly added later.
+project_type: "biometric image recognition system"
+difficulty: "hard"

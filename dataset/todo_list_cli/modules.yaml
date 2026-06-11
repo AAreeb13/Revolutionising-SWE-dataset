@@ -47,7 +47,6 @@ modules:
         output: "TodoItem"
         description: "Creates a todo item from stored dictionary data"
         belongs_to: "TodoItem"
-    technologies: ["Python"]
   - name: "TodoManager"
     component: "To-Do Manager"
     type: "class"
@@ -110,7 +109,6 @@ modules:
         output: "bool"
         description: "Updates the description and/or due date of an existing todo item"
         belongs_to: "TodoManager"
-    technologies: ["Python"]
   - name: "TodoStorage"
     component: "Storage"
     type: "class"
@@ -135,7 +133,6 @@ modules:
         output: "None"
         description: "Saves todo items to the configured local file"
         belongs_to: "TodoStorage"
-    technologies: ["Python", "JSON"]
   - name: "CLIInterface"
     component: "CLI Interface"
     type: "function"
@@ -167,4 +164,4 @@ modules:
             default: "None"
         output: "int"
         description: "Application entry point for command-line execution"
-    technologies: ["Python", "argparse"]
+      
